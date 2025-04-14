@@ -1,0 +1,15 @@
+# Node modules
+node_modules/
+
+# Entornos
+.env
+
+# Compilación
+dist/
+build/
+
+# Configuración del editor
+.vscode/
+
+# Credenciales sensibles
+src/config/firebaseServiceAccount.json
