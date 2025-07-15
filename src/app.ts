@@ -35,10 +35,13 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-  origin: "https://polite-kleicha-6cdd61.netlify.app", // tu dominio de Netlify
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "https://amazing-nougat-aae010.netlify.app", // tu frontend
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Registro de Rutas
