@@ -35,8 +35,10 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: "https://polite-kleicha-6cdd61.netlify.app/signin", // o dominio Vercel
+  credentials: true,
+}));app.use(express.json());
 
 // Registro de Rutas
 app.use('/auth', authRoutes);
