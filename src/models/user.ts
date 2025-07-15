@@ -124,7 +124,17 @@ export const getUsuariosFromFirestore = async (): Promise<Usuario[]> => {
   try {
     const snapshot = await db
       .collection("usuarios")
-      .select("nombre", "apellido", "email", "telefono", "direccion", "fechaReg", "estado", "uidAuth")
+      .select(
+        "nombre",
+        "apellido",
+        "email",
+        "telefono",
+        "direccion",
+        "fechaReg",
+        "estado",
+        "uidAuth"
+      )
+      .orderBy("fechaReg", "desc")
       .get();
 
     return snapshot.docs.map((doc) => {
@@ -142,9 +152,12 @@ export const getUsuariosFromFirestore = async (): Promise<Usuario[]> => {
       };
     });
   } catch (error) {
-    throw new Error("Error al obtener los usuarios: " + (error as Error).message);
+    throw new Error(
+      "Error al obtener los usuarios: " + (error as Error).message
+    );
   }
 };
+
 
 export const updateUsuarioInFirestore = async (
   idUsuario: string,

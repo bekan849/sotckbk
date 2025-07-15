@@ -68,13 +68,17 @@ export const createCompraInFirestore = async (
 
 export const getComprasFromFirestore = async (): Promise<Compra[]> => {
   try {
-    const snapshot = await db.collection("compras").get();
+    // Ordena por fechaIngreso descendente
+    const snapshot = await db
+      .collection("compras")
+      .orderBy("fechaIngreso", "desc")
+      .get();
 
     const compras: Compra[] = snapshot.docs.map((doc) => {
       const data = doc.data() as CompraDB;
       return {
         idCompra: doc.id,
-        fechaIngreso: data.fechaIngreso.toDate().toISOString(), // ✅ ISO string
+        fechaIngreso: data.fechaIngreso.toDate().toISOString(),
         total: data.total,
         estado: data.estado,
         idProveedor: data.idProveedor,
@@ -88,6 +92,7 @@ export const getComprasFromFirestore = async (): Promise<Compra[]> => {
     );
   }
 };
+
 
 export const updateCompraInFirestore = async (
   idCompra: string,

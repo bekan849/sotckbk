@@ -62,7 +62,11 @@ export const createVentaInFirestore = async (idVendedor: string): Promise<string
 
 export const getVentasFromFirestore = async (): Promise<Venta[]> => {
   try {
-    const snapshot = await db.collection("ventas").get();
+    // Ordena las ventas por fechaVenta descendente (más recientes primero)
+    const snapshot = await db
+      .collection("ventas")
+      .orderBy("fechaVenta", "desc")
+      .get();
 
     const ventas: Venta[] = snapshot.docs.map((doc) => {
       const data = doc.data() as VentaDB;

@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import { calcularGananciaDelDia } from "../utilis/gananciaPEPS";
+import { calcularResumenDelDia, ResumenDia } from "../utilis/gananciaPEPS";
 
-export const obtenerGananciasDelDia = async (_req: Request, res: Response) => {
+export const obtenerResumenDelDia = async (_req: Request, res: Response) => {
   try {
-    const resultado = await calcularGananciaDelDia();
-    res.status(200).json(resultado);
+    const resultado: ResumenDia = await calcularResumenDelDia();
+    return res.status(200).json(resultado);
   } catch (error) {
-    console.error("Error al calcular la ganancia del día:", error);
-    res.status(500).json({ error: "Error interno al calcular ganancias" });
+    console.error("Error al calcular el resumen del día:", error);
+    return res.status(500).json({ error: "Error interno al calcular el resumen del día" });
   }
 };

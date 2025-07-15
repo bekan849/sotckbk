@@ -57,7 +57,11 @@ export const createUsuarioRolInFirestore = async (
 
 export const getUsuarioRolFromFirestore = async (): Promise<UsuarioRol[]> => {
   try {
-    const snapshot = await db.collection("usuarioRol").get();
+    // Ordena las asignaciones por fechaAsigna descendente (más recientes primero)
+    const snapshot = await db
+      .collection("usuarioRol")
+      .orderBy("fechaAsigna", "desc")
+      .get();
 
     return snapshot.docs.map((doc) => {
       const data = doc.data() as UsuarioRolDB;
@@ -70,9 +74,13 @@ export const getUsuarioRolFromFirestore = async (): Promise<UsuarioRol[]> => {
       };
     });
   } catch (error) {
-    throw new Error("Error al obtener las asignaciones de usuarioRol: " + (error as Error).message);
+    throw new Error(
+      "Error al obtener las asignaciones de usuarioRol: " +
+        (error as Error).message
+    );
   }
 };
+
 
 export const getUsuarioRolByUserIdFromFirestore = async (
   idUsuario: string
