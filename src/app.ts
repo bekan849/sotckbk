@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
+dotenv.config();
 
 // Routes Auth
 import authRoutes from './routes/authRoutes';
@@ -39,7 +40,6 @@ app.use(
   cors({
     origin: "https://amazing-nougat-aae010.netlify.app", // tu frontend
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
   })
 );
 app.options("*", cors());
