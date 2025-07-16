@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from "dotenv";
-dotenv.config();
+import dotenv from 'dotenv';
 
 // Routes Auth
 import authRoutes from './routes/authRoutes';
@@ -36,14 +35,7 @@ dotenv.config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: "https://amazing-nougat-aae010.netlify.app", // tu frontend
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
-app.options("*", cors());
-
+app.use(cors());
 app.use(express.json());
 
 // Registro de Rutas

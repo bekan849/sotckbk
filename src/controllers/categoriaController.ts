@@ -6,7 +6,6 @@ import {
   cambiarEstadoCategoriaInFirestore,
 } from "../models/Categoria";
 
-// ✅ Crear nueva categoría
 export const createCategoria = async (req: Request, res: Response): Promise<void> => {
   try {
     const { nombre, estado } = req.body;
