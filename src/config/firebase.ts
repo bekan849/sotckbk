@@ -1,13 +1,10 @@
 import admin from 'firebase-admin';
-import dotenv from 'dotenv';
-import serviceAccount from './firebaseServiceAccount.json';
 
-dotenv.config();
+const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS!);
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-  });
-}
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+});
 
 export default admin;
