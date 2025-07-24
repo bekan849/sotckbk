@@ -46,7 +46,7 @@ const validarUsuario = (
     throw new Error("El correo electrónico es inválido.");
 
   if (!telefono || isNaN(Number(telefono)) || telefono.trim().length < 7)
-    throw new Error("El teléfono debe ser numérico y tener al menos 7 dígitos.");
+    throw new Error("El teléfono debe ser numérico y tener al menos 8 dígitos.");
 
   if (!direccion || direccion.trim().length < 5)
     throw new Error("La dirección debe tener al menos 5 caracteres.");
@@ -66,14 +66,12 @@ const esUsuarioDuplicado = async (
   excluirId?: string
 ): Promise<boolean> => {
   const querySnapshot = await db.collection("usuarios").get();
-
-  return querySnapshot.docs.some((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+  return querySnapshot.docs.some((doc) => {
     const data = doc.data() as UsuarioDB;
     const esDuplicado =
-      data.email === email ||
-      data.telefono === telefono ||
-      (data.nombre === nombre && data.apellido === apellido);
-
+      (data.email === email ||
+        data.telefono === telefono ||
+        (data.nombre === nombre && data.apellido === apellido));
     return excluirId ? doc.id !== excluirId && esDuplicado : esDuplicado;
   });
 };
@@ -97,8 +95,7 @@ export const createUsuarioInFirestore = async (
     const direccionLower = direccion.trim().toLowerCase();
 
     const duplicado = await esUsuarioDuplicado(emailLower, telefonoTrim, nombreLower, apellidoLower);
-    if (duplicado)
-      throw new Error("Ya existe un usuario con ese nombre, apellido, email o teléfono.");
+    if (duplicado) throw new Error("Ya existe un usuario con ese nombre, apellido, email o teléfono.");
 
     const userRecord = await firebase.auth().createUser({
       email: emailLower,
@@ -140,7 +137,7 @@ export const getUsuariosFromFirestore = async (): Promise<Usuario[]> => {
       .orderBy("fechaReg", "desc")
       .get();
 
-    return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+    return snapshot.docs.map((doc) => {
       const data = doc.data() as UsuarioDB;
       return {
         idUsuario: doc.id,
@@ -151,13 +148,16 @@ export const getUsuariosFromFirestore = async (): Promise<Usuario[]> => {
         direccion: data.direccion,
         estado: data.estado,
         uidAuth: data.uidAuth,
-        fechaReg: data.fechaReg.toDate().toISOString(),
+        fechaReg: data.fechaReg?.toDate?.().toISOString() ?? "",
       };
     });
   } catch (error) {
-    throw new Error("Error al obtener los usuarios: " + (error as Error).message);
+    throw new Error(
+      "Error al obtener los usuarios: " + (error as Error).message
+    );
   }
 };
+
 
 export const updateUsuarioInFirestore = async (
   idUsuario: string,
@@ -179,8 +179,7 @@ export const updateUsuarioInFirestore = async (
     const direccionLower = direccion.trim().toLowerCase();
 
     const duplicado = await esUsuarioDuplicado(emailLower, telefonoTrim, nombreLower, apellidoLower, idUsuario);
-    if (duplicado)
-      throw new Error("Ya existe otro usuario con ese nombre, apellido, email o teléfono.");
+    if (duplicado) throw new Error("Ya existe otro usuario con ese nombre, apellido, email o teléfono.");
 
     const usuarioRef = db.collection("usuarios").doc(idUsuario);
     const usuarioSnapshot = await usuarioRef.get();

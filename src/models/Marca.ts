@@ -62,7 +62,7 @@ export const getMarcasFromFirestore = async (): Promise<Marca[]> => {
 
     return snapshot.docs.map((doc) => ({
       idMarca: doc.id,
-      ...(doc.data() as Omit<Marca, "idMarca">),
+      ...(doc.data() as Marca),
     }));
   } catch (error) {
     throw new Error("Error al obtener las marcas: " + (error as Error).message);

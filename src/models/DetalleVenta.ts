@@ -66,8 +66,8 @@ export const createDetalleVentaInFirestore = async (
           utilizadoArray: number[];
         }[] = [];
 
-        for (const doc of detallesSnap.docs as FirebaseFirestore.QueryDocumentSnapshot[]) {
-          const data: any = doc.data();
+        for (const doc of detallesSnap.docs) {
+          const data = doc.data();
           const index = (data.idProductos as string[]).indexOf(idProducto);
           if (index === -1) continue;
 
@@ -101,7 +101,7 @@ export const createDetalleVentaInFirestore = async (
           const aConsumir = Math.min(restante, det.cantidadDisponible);
           consumos.push({
             ...det,
-            cantidadDisponible: aConsumir,
+            cantidadDisponible: aConsumir, 
           });
           restante -= aConsumir;
         }
@@ -160,17 +160,16 @@ export const createDetalleVentaInFirestore = async (
   }
 };
 
+
 export const getDetallesVentaFromFirestore = async (): Promise<(DetalleVenta & { idDetalleVenta: string })[]> => {
   try {
-    const detallesVentaSnapshot = await db.collection("detalleVenta").get();
-    return detallesVentaSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-      idDetalleVenta: doc.id,
-      ...(doc.data() as DetalleVenta),
-    }));
+    const detallesVentaSnapshot = await db.collection('detalleVenta').get();
+    return detallesVentaSnapshot.docs.map(doc => ({ idDetalleVenta: doc.id, ...doc.data() } as DetalleVenta & { idDetalleVenta: string }));
   } catch (error) {
-    throw new Error("Error al obtener los detalles de venta: " + (error as Error).message);
+    throw new Error('Error al obtener los detalles de venta: ' + (error as Error).message);
   }
 };
+
 
 export const updateDetalleVentaInFirestore = async (
   idDetalleVenta: string,
@@ -186,20 +185,20 @@ export const updateDetalleVentaInFirestore = async (
         throw new Error(`El detalle de venta con ID ${idDetalleVenta} no existe.`);
       }
 
-      const detalleData = detalleDoc.data() as DetalleVenta;
+      const detalleData = detalleDoc.data();
       if (!detalleData) {
         throw new Error(`Los datos del detalle de venta con ID ${idDetalleVenta} están vacíos o mal formateados.`);
       }
-
       const idVenta = detalleData.idVenta;
+      
+
       const ventaRef = db.collection("ventas").doc(idVenta);
       const ventaDoc = await transaction.get(ventaRef);
-
       if (!ventaDoc.exists) {
         throw new Error(`La venta con ID ${idVenta} no existe.`);
       }
 
-      const ventaData = ventaDoc.data() as { fechaVenta: FirebaseFirestore.Timestamp; estado: string };
+      const ventaData = ventaDoc.data();
       const fechaVenta = ventaData?.fechaVenta;
       const estadoVenta = ventaData?.estado;
 
@@ -207,10 +206,10 @@ export const updateDetalleVentaInFirestore = async (
         throw new Error("Solo se puede editar ventas en estado pendiente o completada.");
       }
 
-      const ventaDate = fechaVenta.toDate();
+      const ventaDate = new Date(fechaVenta);
       const today = new Date();
-      const esMismoDia = ventaDate.toDateString() === today.toDateString();
-
+      const esMismoDia =
+      ventaDate.toDateString() === today.toDateString();
       const usuarioRolSnap = await db
         .collection("usuarioRol")
         .where("idUsuario", "==", idUsuario)
@@ -222,7 +221,7 @@ export const updateDetalleVentaInFirestore = async (
         throw new Error("El usuario no tiene un rol asignado.");
       }
 
-      const usuarioRolData = usuarioRolSnap.docs[0].data() as { idRol: string };
+      const usuarioRolData = usuarioRolSnap.docs[0].data();
       const rolId = usuarioRolData.idRol;
 
       const rolDoc = await transaction.get(db.collection("roles").doc(rolId));
@@ -230,7 +229,12 @@ export const updateDetalleVentaInFirestore = async (
         throw new Error("El rol asignado al usuario no existe.");
       }
 
-      const nombreRol = (rolDoc.data() as { nombre: string }).nombre;
+      const nombreRol = rolDoc.data()?.nombre;
+      if (!esMismoDia && nombreRol !== "Administrador") {
+        throw new Error("Solo se puede editar esta venta el mismo día, salvo que sea Administrador.");
+      }
+
+
       if (!esMismoDia && nombreRol !== "Administrador") {
         throw new Error("Solo se puede editar esta venta el mismo día, salvo que sea Administrador.");
       }
@@ -249,7 +253,7 @@ export const updateDetalleVentaInFirestore = async (
       }
 
       const idsProductos = new Set([...originales.keys(), ...nuevos.keys()]);
-      const productosDocs = new Map<string, FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>>();
+      const productosDocs = new Map<string, FirebaseFirestore.DocumentSnapshot>();
 
       for (const id of idsProductos) {
         const prodRef = db.collection("productos").doc(id);
@@ -258,7 +262,7 @@ export const updateDetalleVentaInFirestore = async (
           throw new Error(`El producto con ID ${id} no existe.`);
         }
 
-        const prodData = prodDoc.data() as { estado: boolean };
+        const prodData = prodDoc.data();
         if (!prodData?.estado) {
           throw new Error(`El producto con ID ${id} está inactivo y no puede venderse.`);
         }
@@ -267,7 +271,7 @@ export const updateDetalleVentaInFirestore = async (
       }
 
       let nuevoTotalDetalle = 0;
-      const productosProcesados: DetalleVenta["productos"] = [];
+      const productosProcesados = [];
 
       for (const [id, datosNuevo] of nuevos.entries()) {
         const cantidadNueva = datosNuevo.cantidad;
@@ -276,7 +280,7 @@ export const updateDetalleVentaInFirestore = async (
         const diferencia = cantidadNueva - cantidadOriginal;
 
         const productoDoc = productosDocs.get(id)!;
-        const stockActual = (productoDoc.data() as { stock: number }).stock || 0;
+        const stockActual = productoDoc.data()?.stock || 0;
         const nuevoStock = stockActual - diferencia;
 
         if (nuevoStock < 0) {
@@ -299,7 +303,7 @@ export const updateDetalleVentaInFirestore = async (
       for (const [id, cantidadOriginal] of originales.entries()) {
         if (!nuevos.has(id)) {
           const productoDoc = productosDocs.get(id)!;
-          const stockActual = (productoDoc.data() as { stock: number }).stock || 0;
+          const stockActual = productoDoc.data()?.stock || 0;
           const nuevoStock = stockActual + cantidadOriginal;
           transaction.update(productoDoc.ref, { stock: nuevoStock });
         }
@@ -316,12 +320,12 @@ export const updateDetalleVentaInFirestore = async (
 
       let totalFinal = 0;
       for (const doc of detallesSnap.docs) {
-        const data = doc.data() as DetalleVenta;
         if (doc.id === idDetalleVenta) {
           totalFinal += nuevoTotalDetalle;
         } else {
+          const data = doc.data();
           if (data.estado) {
-            totalFinal += (data.productos || []).reduce((acc: number, p: { subTotal: number }) => acc + p.subTotal, 0);
+            totalFinal += (data.productos || []).reduce((acc: number, p: any) => acc + p.subTotal, 0);
           }
         }
       }
