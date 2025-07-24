@@ -1,4 +1,5 @@
 import admin from "../config/firebase";
+import { firestore } from "firebase-admin";
 
 const db = admin.firestore();
 
@@ -26,7 +27,7 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
 
   const productosAValidar: { idProducto: string; cantidad: number }[] = [];
 
-  detallesSnapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+  detallesSnapshot.docs.forEach((doc: firestore.QueryDocumentSnapshot) => {
     const detalle = doc.data();
     detalle.idProductos.forEach((idProd: string, i: number) => {
       productosAValidar.push({
@@ -36,7 +37,7 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
     });
   });
 
-  for (const { idProducto, cantidad } of productosAValidar) {
+  for (const { idProducto } of productosAValidar) {
     const comprasSnap = await db
       .collection("compras")
       .where("estado", "==", "completada")
@@ -52,7 +53,7 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
         .where("idCompra", "==", compId)
         .get();
 
-      detalleSnap.docs.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
+      detalleSnap.docs.forEach((d: firestore.QueryDocumentSnapshot) => {
         const data = d.data();
         data.idProductos.forEach((id: string, i: number) => {
           if (id === idProducto) {
@@ -65,7 +66,7 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
     const ventasSnap = await db.collection("detalleVenta").get();
 
     const ventas = ventasSnap.docs
-      .map((doc: FirebaseFirestore.QueryDocumentSnapshot) => doc.data())
+      .map((doc: firestore.QueryDocumentSnapshot) => doc.data())
       .filter((v: any) => v.estado === true)
       .flatMap((v: any) =>
         v.productos.filter((p: any) => p.idProducto === idProducto)
