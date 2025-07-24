@@ -9,7 +9,7 @@ interface VentaDB {
   idVendedor: string;
 }
 
-interface Venta {
+export interface Venta {
   idVenta?: string;
   fechaVenta: string;
   total: number;
@@ -43,7 +43,7 @@ export const createVentaInFirestore = async (idVendedor: string): Promise<string
     const error = validarVenta(0, "completada", idVendedor, false);
     if (error) throw new Error(error);
 
-    const fechaVenta = admin.firestore.Timestamp.fromDate(new Date());
+    const fechaVenta = admin.firestore.Timestamp.now();
 
     const ventaRef = db.collection("ventas").doc();
     const ventaData: VentaDB = {
@@ -62,13 +62,12 @@ export const createVentaInFirestore = async (idVendedor: string): Promise<string
 
 export const getVentasFromFirestore = async (): Promise<Venta[]> => {
   try {
-    // Ordena las ventas por fechaVenta descendente (más recientes primero)
     const snapshot = await db
       .collection("ventas")
       .orderBy("fechaVenta", "desc")
       .get();
 
-    const ventas: Venta[] = snapshot.docs.map((doc) => {
+    return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data() as VentaDB;
       return {
         idVenta: doc.id,
@@ -78,13 +77,10 @@ export const getVentasFromFirestore = async (): Promise<Venta[]> => {
         idVendedor: data.idVendedor,
       };
     });
-
-    return ventas;
   } catch (error) {
     throw new Error("Error al obtener las ventas: " + (error as Error).message);
   }
 };
-
 
 const esAdministrador = async (idUsuario: string): Promise<boolean> => {
   const rolSnap = await db
@@ -162,13 +158,22 @@ export const cambiarEstadoVentaInFirestore = async (
       db.collection("detalleVenta").where("idVenta", "==", idVenta)
     );
 
-    const nuevoEstadoDetalle = nuevoEstadoVenta === "completada";
-    const productosStock: { idProducto: string; cantidad: number; devolver: boolean }[] = [];
-    const detallesActualizar: any[] = [];
+    type ProductoDetalle = {
+      idProducto: string;
+      cantidad: number;
+      subTotal: number;
+    };
 
-    for (const doc of detallesSnap.docs) {
-      const data = doc.data();
-      const cambiaEstado = data.estado !== nuevoEstadoDetalle;
+    const productosStock: { idProducto: string; cantidad: number; devolver: boolean }[] = [];
+    const detallesActualizar: {
+      ref: FirebaseFirestore.DocumentReference;
+      data: { productos: ProductoDetalle[]; estado: boolean };
+      cambiaEstado: boolean;
+    }[] = [];
+
+    detallesSnap.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data() as { productos: ProductoDetalle[]; estado: boolean };
+      const cambiaEstado = data.estado !== (nuevoEstadoVenta === "completada");
 
       if (cambiaEstado) {
         for (const p of data.productos) {
@@ -181,7 +186,7 @@ export const cambiarEstadoVentaInFirestore = async (
       }
 
       detallesActualizar.push({ ref: doc.ref, data, cambiaEstado });
-    }
+    });
 
     const productosMap = new Map<string, FirebaseFirestore.DocumentSnapshot>();
     for (const { idProducto } of productosStock) {
@@ -203,13 +208,13 @@ export const cambiarEstadoVentaInFirestore = async (
 
     for (const det of detallesActualizar) {
       if (det.cambiaEstado) {
-        transaction.update(det.ref, { estado: nuevoEstadoDetalle });
+        transaction.update(det.ref, { estado: nuevoEstadoVenta === "completada" });
       }
     }
 
     let nuevoTotal = 0;
     for (const det of detallesActualizar) {
-      if (nuevoEstadoDetalle) {
+      if (nuevoEstadoVenta === "completada") {
         for (const p of det.data.productos) {
           nuevoTotal += p.subTotal;
         }

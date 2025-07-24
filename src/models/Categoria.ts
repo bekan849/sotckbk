@@ -18,7 +18,9 @@ const esNombreCategoriaDuplicado = async (
     .where("nombre", "==", nombreUpper)
     .get();
 
-  return querySnapshot.docs.some((doc) => doc.id !== excluirId);
+  return querySnapshot.docs.some(
+    (doc: FirebaseFirestore.QueryDocumentSnapshot) => doc.id !== excluirId
+  );
 };
 
 const validarCategoria = (nombre: string): string | null => {
@@ -63,7 +65,7 @@ export const getCategoriasFromFirestore = async (): Promise<Categoria[]> => {
       .select("nombre", "estado")
       .get();
 
-    return snapshot.docs.map((doc) => ({
+    return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
       idCategoria: doc.id,
       ...(doc.data() as Categoria),
     }));

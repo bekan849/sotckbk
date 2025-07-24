@@ -48,31 +48,34 @@ export const createUsuarioRolInFirestore = async (
       estado,
     };
 
-    const usuarioRolRef = db.collection("usuarioRol").doc();
-    await usuarioRolRef.set(usuarioRolData);
+    await db.collection("usuarioRol").add(usuarioRolData);
   } catch (error) {
-    throw new Error("Error al crear la asignación de usuarioRol: " + (error as Error).message);
+    throw new Error(
+      "Error al crear la asignación de usuarioRol: " +
+        (error as Error).message
+    );
   }
 };
 
 export const getUsuarioRolFromFirestore = async (): Promise<UsuarioRol[]> => {
   try {
-    // Ordena las asignaciones por fechaAsigna descendente (más recientes primero)
     const snapshot = await db
       .collection("usuarioRol")
       .orderBy("fechaAsigna", "desc")
       .get();
 
-    return snapshot.docs.map((doc) => {
-      const data = doc.data() as UsuarioRolDB;
-      return {
-        idUsuarioRol: doc.id,
-        idUsuario: data.idUsuario,
-        idRol: data.idRol,
-        estado: data.estado,
-        fechaAsigna: data.fechaAsigna.toDate().toISOString(),
-      };
-    });
+    return snapshot.docs.map(
+      (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+        const data = doc.data() as UsuarioRolDB;
+        return {
+          idUsuarioRol: doc.id,
+          idUsuario: data.idUsuario,
+          idRol: data.idRol,
+          estado: data.estado,
+          fechaAsigna: data.fechaAsigna.toDate().toISOString(),
+        };
+      }
+    );
   } catch (error) {
     throw new Error(
       "Error al obtener las asignaciones de usuarioRol: " +
@@ -81,28 +84,34 @@ export const getUsuarioRolFromFirestore = async (): Promise<UsuarioRol[]> => {
   }
 };
 
-
 export const getUsuarioRolByUserIdFromFirestore = async (
   idUsuario: string
 ): Promise<UsuarioRol | null> => {
-  const snapshot = await db
-    .collection("usuarioRol")
-    .where("idUsuario", "==", idUsuario)
-    .limit(1)
-    .get();
+  try {
+    const snapshot = await db
+      .collection("usuarioRol")
+      .where("idUsuario", "==", idUsuario.trim())
+      .limit(1)
+      .get();
 
-  if (snapshot.empty) return null;
+    if (snapshot.empty) return null;
 
-  const doc = snapshot.docs[0];
-  const data = doc.data() as UsuarioRolDB;
+    const doc = snapshot.docs[0];
+    const data = doc.data() as UsuarioRolDB;
 
-  return {
-    idUsuarioRol: doc.id,
-    idUsuario: data.idUsuario,
-    idRol: data.idRol,
-    estado: data.estado,
-    fechaAsigna: data.fechaAsigna.toDate().toISOString(),
-  };
+    return {
+      idUsuarioRol: doc.id,
+      idUsuario: data.idUsuario,
+      idRol: data.idRol,
+      estado: data.estado,
+      fechaAsigna: data.fechaAsigna.toDate().toISOString(),
+    };
+  } catch (error) {
+    throw new Error(
+      "Error al obtener el usuarioRol por ID de usuario: " +
+        (error as Error).message
+    );
+  }
 };
 
 export const updateUsuarioRolInFirestore = async (
@@ -123,9 +132,10 @@ export const updateUsuarioRolInFirestore = async (
 
     const data = doc.data() as UsuarioRolDB;
 
-    const nuevaFecha = data.idRol !== idRol
-      ? admin.firestore.Timestamp.now()
-      : data.fechaAsigna;
+    const nuevaFecha =
+      data.idRol !== idRol.trim()
+        ? admin.firestore.Timestamp.now()
+        : data.fechaAsigna;
 
     await usuarioRolRef.update({
       idUsuario: idUsuario.trim(),
@@ -134,7 +144,10 @@ export const updateUsuarioRolInFirestore = async (
       estado,
     });
   } catch (error) {
-    throw new Error("Error al actualizar la asignación de usuarioRol: " + (error as Error).message);
+    throw new Error(
+      "Error al actualizar la asignación de usuarioRol: " +
+        (error as Error).message
+    );
   }
 };
 
@@ -147,9 +160,11 @@ export const cambiarEstadoUsuarioRolInFirestore = async (
       throw new Error("El estado debe ser un valor booleano.");
     }
 
-    const usuarioRolRef = db.collection("usuarioRol").doc(idUsuarioRol);
-    await usuarioRolRef.update({ estado });
+    await db.collection("usuarioRol").doc(idUsuarioRol).update({ estado });
   } catch (error) {
-    throw new Error("Error al cambiar el estado del usuarioRol: " + (error as Error).message);
+    throw new Error(
+      "Error al cambiar el estado del usuarioRol: " +
+        (error as Error).message
+    );
   }
 };

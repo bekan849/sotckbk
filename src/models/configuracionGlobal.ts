@@ -28,10 +28,7 @@ const validarConfig = (data: Partial<ConfigGlobal>): void => {
     errores.push("El nombre de la empresa es requerido y debe tener al menos 3 caracteres.");
   }
 
-  if (
-    !data.ubicacion?.direccion ||
-    data.ubicacion.direccion.trim().length < 5
-  ) {
+  if (!data.ubicacion?.direccion || data.ubicacion.direccion.trim().length < 5) {
     errores.push("La dirección es requerida y debe tener al menos 5 caracteres.");
   }
 
@@ -75,6 +72,8 @@ export const setConfigGlobalInFirestore = async (
 
   const now = admin.firestore.Timestamp.now();
 
+  const previousData = doc.exists ? (doc.data() as ConfigGlobal) : null;
+
   await ref.set({
     ...data,
     nombreEmpresa: data.nombreEmpresa.trim(),
@@ -89,7 +88,7 @@ export const setConfigGlobalInFirestore = async (
       telefono1: data.telefonos.telefono1.trim(),
       telefono2: data.telefonos.telefono2.trim(),
     },
-    createdAt: doc.exists ? doc.data()?.createdAt || now : now,
+    createdAt: previousData?.createdAt || now,
     updatedAt: now,
   });
 };

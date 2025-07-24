@@ -29,7 +29,7 @@ export const createRolInFirestore = async (
 
     const rolRef = db.collection("roles").doc();
     const rolData: Rol = {
-      nombre: nombre.trim(),
+      nombre: nombre.trim().toLowerCase(),
       estado,
     };
 
@@ -46,9 +46,9 @@ export const getRolesFromFirestore = async (): Promise<Rol[]> => {
       .select("nombre", "estado")
       .get();
 
-    return snapshot.docs.map((doc) => ({
+    return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
       idRol: doc.id,
-      ...(doc.data() as Rol),
+      ...(doc.data() as Omit<Rol, "idRol">),
     }));
   } catch (error) {
     throw new Error("Error al obtener los roles: " + (error as Error).message);
@@ -65,7 +65,7 @@ export const updateRolInFirestore = async (
 
     const rolRef = db.collection("roles").doc(idRol);
     await rolRef.update({
-      nombre: nombre.trim(),
+      nombre: nombre.trim().toLowerCase(),
       estado,
     });
   } catch (error) {
@@ -89,7 +89,9 @@ export const cambiarEstadoRolInFirestore = async (
   }
 };
 
-export const getRolByIdFromFirestore = async (idRol: string): Promise<Rol | null> => {
+export const getRolByIdFromFirestore = async (
+  idRol: string
+): Promise<Rol | null> => {
   try {
     const doc = await db.collection("roles").doc(idRol).get();
 
@@ -97,7 +99,7 @@ export const getRolByIdFromFirestore = async (idRol: string): Promise<Rol | null
 
     return {
       idRol: doc.id,
-      ...(doc.data() as Rol),
+      ...(doc.data() as Omit<Rol, "idRol">),
     };
   } catch (error) {
     throw new Error("Error al obtener el rol por ID: " + (error as Error).message);

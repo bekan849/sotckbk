@@ -42,10 +42,9 @@ const esProveedorDuplicado = async (
   excludeId?: string
 ): Promise<boolean> => {
   const snapshot = await db.collection("proveedores").get();
-
   const normalizado = (texto: string) => texto.trim().toLowerCase();
 
-  return snapshot.docs.some((doc) => {
+  return snapshot.docs.some((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
     if (excludeId && doc.id === excludeId) return false;
 
     const data = doc.data() as Proveedor;
@@ -95,9 +94,9 @@ export const getProveedoresFromFirestore = async (): Promise<Proveedor[]> => {
       .select("nombre", "direccion", "email", "telefono", "estado")
       .get();
 
-    return snapshot.docs.map((doc) => ({
+    return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
       idProveedor: doc.id,
-      ...(doc.data() as Proveedor),
+      ...(doc.data() as Omit<Proveedor, "idProveedor">),
     }));
   } catch (error) {
     throw new Error("Error al obtener los proveedores: " + (error as Error).message);
@@ -137,6 +136,10 @@ export const cambiarEstadoProveedorInFirestore = async (
   estado: boolean
 ): Promise<void> => {
   try {
+    if (typeof estado !== "boolean") {
+      throw new Error("El estado debe ser true o false.");
+    }
+
     const proveedorRef = db.collection("proveedores").doc(idProveedor);
     await proveedorRef.update({ estado });
   } catch (error) {

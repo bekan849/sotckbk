@@ -58,7 +58,10 @@ const validarProducto = (
   if (typeof estado !== "boolean") return "El estado debe ser booleano.";
   if (!idCategoria || !idMarca)
     return "Los IDs de categoría y marca son obligatorios.";
-  if (!imagen || !/^https?:\/\/.+\.(jpg|jpeg|png|gif|bmp)$/i.test(imagen))
+  if (
+    !imagen ||
+    !/^https?:\/\/.+\.(jpg|jpeg|png|gif|bmp)$/i.test(imagen)
+  )
     return "La URL de la imagen es obligatoria y debe ser válida.";
   return null;
 };
@@ -121,10 +124,11 @@ export const getProductosFromFirestore = async (): Promise<
         "imagen"
       )
       .get();
+
     return snapshot.docs.map((doc) => ({
       idProducto: doc.id,
-      ...doc.data(),
-    })) as (Producto & { idProducto: string })[];
+      ...(doc.data() as Omit<Producto, "idProducto">),
+    }));
   } catch (error) {
     throw new Error(
       "Error al obtener los productos: " + (error as Error).message
@@ -176,6 +180,9 @@ export const cambiarEstadoProductoInFirestore = async (
   estado: boolean
 ): Promise<void> => {
   try {
+    if (typeof estado !== "boolean") {
+      throw new Error("El estado debe ser true o false.");
+    }
     const productoRef = db.collection("productos").doc(idProducto);
     await productoRef.update({ estado });
   } catch (error) {

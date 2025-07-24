@@ -1,3 +1,4 @@
+// agrupadorPorPeriodo.ts
 export const agruparPorPeriodo = (
   fecha: Date,
   tipo: "dia" | "semana" | "mes" | "anio"
@@ -14,11 +15,12 @@ export const agruparPorPeriodo = (
       const domingo = new Date(lunes);
       domingo.setDate(lunes.getDate() + 6);
 
-      return `${lunes.getDate().toString().padStart(2, '0')}/${(lunes.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')} - ${domingo.getDate().toString().padStart(2, '0')}/${(domingo.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}`;
+      const format = (d: Date): string =>
+        `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}`;
+
+      return `${format(lunes)} - ${format(domingo)}`;
     }
 
     case "mes":
@@ -54,7 +56,7 @@ export const esDelPeriodo = (
       );
 
     case "semana": {
-      const getLunes = (d: Date) => {
+      const getLunes = (d: Date): Date => {
         const date = new Date(d);
         const day = date.getDay();
         const diff = (day === 0 ? -6 : 1) - day;

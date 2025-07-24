@@ -68,13 +68,12 @@ export const createCompraInFirestore = async (
 
 export const getComprasFromFirestore = async (): Promise<Compra[]> => {
   try {
-    // Ordena por fechaIngreso descendente
     const snapshot = await db
       .collection("compras")
       .orderBy("fechaIngreso", "desc")
       .get();
 
-    const compras: Compra[] = snapshot.docs.map((doc) => {
+    const compras: Compra[] = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data() as CompraDB;
       return {
         idCompra: doc.id,
@@ -87,12 +86,9 @@ export const getComprasFromFirestore = async (): Promise<Compra[]> => {
 
     return compras;
   } catch (error) {
-    throw new Error(
-      "Error al obtener las compras: " + (error as Error).message
-    );
+    throw new Error("Error al obtener las compras: " + (error as Error).message);
   }
 };
-
 
 export const updateCompraInFirestore = async (
   idCompra: string,
@@ -112,9 +108,7 @@ export const updateCompraInFirestore = async (
 
     await compraRef.update({ total, estado, idProveedor });
   } catch (error) {
-    throw new Error(
-      "Error al actualizar la compra: " + (error as Error).message
-    );
+    throw new Error("Error al actualizar la compra: " + (error as Error).message);
   }
 };
 
@@ -140,20 +134,19 @@ export const cambiarEstadoCompraInFirestore = async (
     .where("idCompra", "==", idCompra)
     .get();
 
-  const detallesData = detalleSnapshot.docs.map((doc) => ({
+  const detallesData = detalleSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
     ref: doc.ref,
     data: doc.data(),
   }));
 
   const productosIdsSet = new Set<string>();
-  detallesData.forEach(({ data }) => {
+  detallesData.forEach(({ data }: { data: any }) => {
     const productos = data.idProductos || [];
     productos.forEach((id: string) => productosIdsSet.add(id));
   });
 
   await db.runTransaction(async (transaction) => {
-    const productosDocs: Record<string, FirebaseFirestore.DocumentSnapshot> =
-      {};
+    const productosDocs: Record<string, FirebaseFirestore.DocumentSnapshot> = {};
 
     for (const idProducto of productosIdsSet) {
       const productoRef = db.collection("productos").doc(idProducto);
@@ -193,7 +186,7 @@ export const cambiarEstadoCompraInFirestore = async (
 
       const estaActivo = nuevoEstadoDetalle ? true : estadoActual;
       if (estaActivo) {
-        const totalParcial = subTotales.reduce((a, b) => a + b, 0);
+        const totalParcial = subTotales.reduce((a: number, b: number) => a + b, 0);
         nuevoTotal += totalParcial;
       }
     }
