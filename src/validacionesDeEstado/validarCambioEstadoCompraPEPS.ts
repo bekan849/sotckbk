@@ -21,11 +21,12 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
     .get();
 
   if (detallesSnapshot.empty) {
-    return; 
+    return;
   }
 
   const productosAValidar: { idProducto: string; cantidad: number }[] = [];
-  detallesSnapshot.docs.forEach(doc => {
+
+  detallesSnapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
     const detalle = doc.data();
     detalle.idProductos.forEach((idProd: string, i: number) => {
       productosAValidar.push({
@@ -51,7 +52,7 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
         .where("idCompra", "==", compId)
         .get();
 
-      detalleSnap.docs.forEach(d => {
+      detalleSnap.docs.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
         const data = d.data();
         data.idProductos.forEach((id: string, i: number) => {
           if (id === idProducto) {
@@ -64,13 +65,13 @@ export const validarCambioEstadoCompraPEPS = async (idCompra: string): Promise<v
     const ventasSnap = await db.collection("detalleVenta").get();
 
     const ventas = ventasSnap.docs
-      .map(doc => doc.data())
-      .filter(v => v.estado === true)
-      .flatMap(v =>
+      .map((doc: FirebaseFirestore.QueryDocumentSnapshot) => doc.data())
+      .filter((v: any) => v.estado === true)
+      .flatMap((v: any) =>
         v.productos.filter((p: any) => p.idProducto === idProducto)
       );
 
-    let ventasPendientes = ventas.reduce((acc, v) => acc + v.cantidad, 0);
+    let ventasPendientes = ventas.reduce((acc: number, v: any) => acc + v.cantidad, 0);
 
     for (const item of comprasPEPS) {
       if (ventasPendientes === 0) break;
